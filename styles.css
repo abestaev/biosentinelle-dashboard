@@ -162,10 +162,6 @@ h2 {
 
 .chr-hit {
   position: absolute;
-  left: 8%;
-  top: 24.3%;
-  width: 87%;
-  height: 5%;
   border: 0;
   border-radius: 6px;
   background: rgba(47, 158, 115, 0.06);
@@ -175,6 +171,20 @@ h2 {
 .chr-hit:hover {
   outline: 2px solid rgba(47, 158, 115, 0.65);
   background: rgba(47, 158, 115, 0.12);
+}
+
+.chr-hit-iv {
+  left: 8%;
+  top: 24.3%;
+  width: 87%;
+  height: 5%;
+}
+
+.chr-hit-xvi {
+  left: 8%;
+  top: 82.9%;
+  width: 60%;
+  height: 5%;
 }
 
 .modal {

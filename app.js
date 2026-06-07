@@ -3,8 +3,18 @@ const DEFAULT_INSERTIONS_URLS = [
   "./insertions.json",
   "/output/insertions.json",
 ];
-const CHR_IV = "ref|NC_001136|";
-const CHR_IV_LENGTH = 1531933;
+const CHROMOSOMES = {
+  chrIV: {
+    label: "chrIV",
+    ref: "ref|NC_001136|",
+    length: 1531933,
+  },
+  chrXVI: {
+    label: "chrXVI",
+    ref: "ref|NC_001148|",
+    length: 948066,
+  },
+};
 const COLORS = {
   Kan_gene: "#2F9E73",
   Promotor_VCF: "#4E79A7",
@@ -21,11 +31,12 @@ const state = {
   isLoaded: false,
   loadPromise: null,
   dataSource: "",
+  chromosomeKey: "chrIV",
 };
 
 const statusEl = document.getElementById("status");
 const modal = document.getElementById("modal");
-const openChrIV = document.getElementById("openChrIV");
+const chromosomeButtons = document.querySelectorAll("[data-chromosome]");
 const closeModal = document.getElementById("closeModal");
 const closeBackdrop = document.getElementById("closeBackdrop");
 const binSlider = document.getElementById("binSlider");
@@ -35,6 +46,7 @@ const viewValue = document.getElementById("viewValue");
 const plotTarget = document.getElementById("chrIVPlot");
 const modCenter = document.getElementById("modCenter");
 const geneReplaced = document.getElementById("geneReplaced");
+const chromosomeLabel = document.getElementById("chromosomeLabel");
 
 function formatInt(value) {
   return Math.round(value).toLocaleString("en-US");
@@ -89,15 +101,21 @@ function updateSummary() {
   vcfReads.textContent = formatInt(totals.vcf);
 }
 
+function activeChromosome() {
+  return CHROMOSOMES[state.chromosomeKey] || CHROMOSOMES.chrIV;
+}
+
 function positionsFor(element) {
+  const chromosome = activeChromosome();
   return state.insertions
-    .filter((row) => row.chromosome === CHR_IV && row.element === element)
+    .filter((row) => row.chromosome === chromosome.ref && row.element === element)
     .flatMap((row) => row.junction_positions || []);
 }
 
 function primaryInsertion(element) {
+  const chromosome = activeChromosome();
   return state.insertions
-    .filter((row) => row.chromosome === CHR_IV && row.element === element)
+    .filter((row) => row.chromosome === chromosome.ref && row.element === element)
     .sort((a, b) => (b.junction_positions?.length || 0) - (a.junction_positions?.length || 0))[0];
 }
 
@@ -106,15 +124,16 @@ function primaryKanInsertion() {
 }
 
 function estimateGapCenter() {
+  const chromosome = activeChromosome();
   const best = primaryKanInsertion();
-  if (!best) return Math.floor(CHR_IV_LENGTH / 2);
+  if (!best) return Math.floor(chromosome.length / 2);
 
   if (best.left_breakpoint && best.right_breakpoint) {
     return Math.round((best.left_breakpoint + best.right_breakpoint) / 2);
   }
 
   if (best.insertion_position) return best.insertion_position;
-  return Math.floor(CHR_IV_LENGTH / 2);
+  return Math.floor(chromosome.length / 2);
 }
 
 function geneLabel(gene) {
@@ -149,6 +168,7 @@ function updateReplacedGene() {
 }
 
 function centeredRegion(center, width) {
+  const chromosome = activeChromosome();
   let start = Math.round(center - width / 2);
   let end = start + width - 1;
 
@@ -157,8 +177,8 @@ function centeredRegion(center, width) {
     end = width;
   }
 
-  if (end > CHR_IV_LENGTH) {
-    end = CHR_IV_LENGTH;
+  if (end > chromosome.length) {
+    end = chromosome.length;
     start = Math.max(1, end - width + 1);
   }
 
@@ -179,16 +199,18 @@ function binPositions(positions, binSize, regionStart, regionEnd) {
   return bins;
 }
 
-function drawChrIVPlot() {
+function drawChromosomePlot() {
   if (!state.insertions.length) {
     plotTarget.innerHTML = '<div class="empty-plot">Chargement des donnees JSON...</div>';
     return;
   }
 
+  const chromosome = activeChromosome();
   const binSize = state.binSize;
   const gapCenter = estimateGapCenter();
+  if (chromosomeLabel) chromosomeLabel.textContent = chromosome.label;
   if (modCenter) {
-    modCenter.textContent = `Centre modification: chrIV:${formatInt(gapCenter)} bp`;
+    modCenter.textContent = `Centre modification: ${chromosome.label}:${formatInt(gapCenter)} bp`;
   }
   updateReplacedGene();
   const { start: regionStart, end: regionEnd } = centeredRegion(gapCenter, state.viewWidth);
@@ -248,9 +270,9 @@ function drawChrIVPlot() {
   }).join("");
 
   plotTarget.innerHTML = `
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Histogramme chrIV">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Histogramme ${chromosome.label}">
       <rect width="100%" height="100%" fill="#ffffff"/>
-      <text x="0" y="21" font-size="18" font-weight="700" fill="#172033">chrIV - zoom du pic Kan_gene + Promotor_VCF</text>
+      <text x="0" y="21" font-size="18" font-weight="700" fill="#172033">${chromosome.label} - zoom du pic Kan_gene + Promotor_VCF</text>
       <text x="0" y="42" font-size="13" fill="#6B778C">centre du vide=${formatInt(gapCenter)} bp | region=${formatInt(regionStart)}-${formatInt(regionEnd)} bp | bin=${formatInt(binSize)} bp | max bin=${formatInt(maxBin)}</text>
       <line x1="${left + ((gapCenter - regionStart) / regionLength) * plotW}" y1="${top}" x2="${left + ((gapCenter - regionStart) / regionLength) * plotW}" y2="${bottom}" stroke="#172033" stroke-width="2" stroke-dasharray="5 5" opacity="0.68"/>
       <rect x="${left}" y="${top}" width="${plotW}" height="${plotH}" fill="#F6F8FB" stroke="#DDE5EF"/>
@@ -259,7 +281,7 @@ function drawChrIVPlot() {
       <line x1="${left}" y1="${bottom}" x2="${right}" y2="${bottom}" stroke="#9EADBF"/>
       ${ticks}
       <text x="${left}" y="${height - 14}" font-size="13" fill="#6B778C">${formatInt(regionStart)}</text>
-      <text x="${right}" y="${height - 14}" text-anchor="end" font-size="13" fill="#6B778C">position sur chrIV</text>
+      <text x="${right}" y="${height - 14}" text-anchor="end" font-size="13" fill="#6B778C">position sur ${chromosome.label}</text>
       <g data-toggle="Kan_gene" style="cursor:pointer" opacity="${legendOpacity("Kan_gene")}">
         <title>Cliquer pour ${legendLabel("Kan_gene")} Kan_gene</title>
         <rect x="700" y="8" width="104" height="27" rx="6" fill="#F6F8FB" stroke="#DDE5EF"/>
@@ -303,16 +325,17 @@ function loadInsertions() {
   return state.loadPromise;
 }
 
-function openModal() {
+function openModal(chromosomeKey = "chrIV") {
+  state.chromosomeKey = CHROMOSOMES[chromosomeKey] ? chromosomeKey : "chrIV";
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   if (state.isLoaded) {
-    drawChrIVPlot();
+    drawChromosomePlot();
     return;
   }
 
   plotTarget.innerHTML = '<div class="empty-plot">Chargement des donnees JSON...</div>';
-  loadInsertions().then(drawChrIVPlot).catch((error) => {
+  loadInsertions().then(drawChromosomePlot).catch((error) => {
     plotTarget.innerHTML = `
       <div class="empty-plot">
         Impossible de charger le JSON externe ou le snapshot embarque.<br>
@@ -331,13 +354,13 @@ function hideModal() {
 binSlider.addEventListener("input", () => {
   state.binSize = Number(binSlider.value);
   binValue.textContent = `${formatInt(state.binSize)} bp`;
-  if (state.isLoaded) drawChrIVPlot();
+  if (state.isLoaded) drawChromosomePlot();
 });
 
 viewSlider.addEventListener("input", () => {
   state.viewWidth = Number(viewSlider.value);
   viewValue.textContent = `${formatInt(state.viewWidth)} bp`;
-  if (state.isLoaded) drawChrIVPlot();
+  if (state.isLoaded) drawChromosomePlot();
 });
 
 plotTarget.addEventListener("click", (event) => {
@@ -349,10 +372,12 @@ plotTarget.addEventListener("click", (event) => {
   if (!state.visible.Kan_gene && !state.visible.Promotor_VCF) {
     state.visible[element] = true;
   }
-  drawChrIVPlot();
+  drawChromosomePlot();
 });
 
-openChrIV.addEventListener("click", openModal);
+chromosomeButtons.forEach((button) => {
+  button.addEventListener("click", () => openModal(button.dataset.chromosome));
+});
 closeModal.addEventListener("click", hideModal);
 closeBackdrop.addEventListener("click", hideModal);
 
@@ -362,7 +387,7 @@ document.addEventListener("keydown", (event) => {
 
 loadInsertions()
   .then(() => {
-    if (modal.classList.contains("is-open")) drawChrIVPlot();
+    if (modal.classList.contains("is-open")) drawChromosomePlot();
   })
   .catch((error) => {
     console.error(error);

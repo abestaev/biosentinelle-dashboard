@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BioSentinel Dashboard</title>
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <main class="page">
@@ -21,7 +21,8 @@
             src="./output/combined_kan_vcf_chrom_histograms_bin1000.svg?v=4"
             alt="Histogrammes fusionnés Kan_gene et Promotor_VCF par chromosome"
           />
-          <button class="chr-hit chr-hit-iv" id="openChrIV" type="button" aria-label="Ouvrir le détail du chromosome IV"></button>
+          <button class="chr-hit chr-hit-iv" type="button" data-chromosome="chrIV" aria-label="Ouvrir le détail du chromosome IV"></button>
+          <button class="chr-hit chr-hit-xvi" type="button" data-chromosome="chrXVI" aria-label="Ouvrir le détail du chromosome XVI"></button>
         </div>
       </section>
     </main>
@@ -31,7 +32,7 @@
       <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <header class="dialog-head">
           <div>
-            <p class="eyebrow">chrIV</p>
+            <p class="eyebrow" id="chromosomeLabel">chrIV</p>
             <h2 id="modalTitle">Histogramme local</h2>
             <div class="gene-replaced" id="geneReplaced" aria-live="polite"></div>
           </div>
@@ -58,6 +59,6 @@
     </div>
 
     <script src="insertions-data.js?v=1"></script>
-    <script src="app.js?v=19"></script>
+    <script src="app.js?v=20"></script>
   </body>
 </html>
