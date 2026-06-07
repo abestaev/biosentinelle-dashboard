@@ -31,7 +31,7 @@ const state = {
   isLoaded: false,
   loadPromise: null,
   dataSource: "",
-  chromosomeKey: "chrIV",
+  chromosomeKey: "chrXVI",
 };
 
 const statusEl = document.getElementById("status");
@@ -325,8 +325,8 @@ function loadInsertions() {
   return state.loadPromise;
 }
 
-function openModal(chromosomeKey = "chrIV") {
-  state.chromosomeKey = CHROMOSOMES[chromosomeKey] ? chromosomeKey : "chrIV";
+function openModal(chromosomeKey = "chrXVI") {
+  state.chromosomeKey = CHROMOSOMES[chromosomeKey] ? chromosomeKey : "chrXVI";
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   if (state.isLoaded) {
